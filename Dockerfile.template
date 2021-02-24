@@ -3,7 +3,7 @@
 FROM balenalib/%%BALENA_MACHINE_NAME%%-python:3.7.4-buster-run
 
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends ffmpeg cifs-utils
+RUN apt-get install -y --no-install-recommends g++ ffmpeg cifs-utils
 ENV PYTHONUNBUFFERED 1
 
 # copying requirements separately means they are only installed when the file changes
