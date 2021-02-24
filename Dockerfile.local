@@ -3,7 +3,7 @@
 FROM python:3
 
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends ffmpeg cifs-utils
+RUN apt-get install -y --no-install-recommends g++ ffmpeg cifs-utils
 ENV PYTHONUNBUFFERED 1
 ENV TZ=Australia/Melbourne
 
