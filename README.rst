@@ -31,12 +31,12 @@ To run without building::
 To run tests::
 
    make up
-   docker exec -it transcoder_transcoder_1 make test
+   docker exec -it transcoder make test
 
 To run linting::
 
    make up
-   docker exec -it transcoder_transcoder_1 make lint
+   docker exec -it transcoder make lint
 
 To speed up ffmpeg, change app/settings.py ACCESS_FFMPEG_ARGS and WEB_FFMPEG_ARGS: '-preset', 'ultrafast'
 To run without slack, put a return statement at the top of post_slack_message (app/lib/slack.py)

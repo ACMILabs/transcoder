@@ -130,7 +130,7 @@ def get_video_metadata(video_location):
         'duration_hms': duration_hms,
         'overall_bit_rate': int(m['format'].get('bit_rate', 0)) or None,
 
-        'video_codec': m_video.get('codec_name', None),
+        'video_codec': f"{m_video.get('codec_long_name', None)} ({m_video.get('codec_tag_string', None)})",
         'video_bit_rate':int(m_video.get('bit_rate', 0)) or None,
         'video_max_bit_rate':int(m_video.get('max_bit_rate', 0)) or None,
         'video_frame_rate': video_frame_rate,
@@ -138,7 +138,7 @@ def get_video_metadata(video_location):
         'width': m_video.get('width', None), # int already
         'height': m_video.get('height', None), # int already
 
-        'audio_codec': m_audio.get('codec_name', None),
+        'audio_codec': f"{m_audio.get('codec_long_name', None)} ({m_audio.get('codec_tag_string', None)})",
         'audio_channels': m_audio.get('channels', None), # int
         'audio_sample_rate': int(m_audio.get('sample_rate', 0)) or None,
         'audio_bit_rate': int(m_audio.get('bit_rate', 0)) or None,
