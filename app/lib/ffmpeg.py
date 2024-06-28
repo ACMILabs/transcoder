@@ -72,10 +72,10 @@ def get_video_metadata(video_location):  # pylint: disable=too-many-locals
     :return: Dictionary of attributes.
     """
 
-    ffprobe_args = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", video_location]
+    ffprobe_args = ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', video_location]
     try:
-        command = " ".join(ffprobe_args)
-        logging.info("Running %s", command)
+        command = ' '.join(ffprobe_args)
+        logging.info('Running %s', command)
         cmd = subprocess.run(ffprobe_args, stdout=subprocess.PIPE, check=True)
         out = cmd.stdout
         m = json.loads(out.decode('utf-8'))
@@ -91,7 +91,7 @@ def get_video_metadata(video_location):  # pylint: disable=too-many-locals
     m_video = m.get('video', {})
     m_audio = m.get('audio', {})
 
-    frame_rate = m_video.get('avg_frame_rate', "0/1").split("/")
+    frame_rate = m_video.get('avg_frame_rate', '0/1').split('/')
     video_frame_rate = int(frame_rate[0]) * 1.0 / int(frame_rate[1])
 
     # pylint: disable=fixme
@@ -145,7 +145,7 @@ def get_video_metadata(video_location):  # pylint: disable=too-many-locals
 
 # Mini lib for network-concurrency-friendly locking/unlocking a file by writing adjacent '.lock' files.
 def _lockfile(filepath):
-    return f"{filepath}.lock"
+    return f'{filepath}.lock'
 
 
 def is_locked(filepath):
