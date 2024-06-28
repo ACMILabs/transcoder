@@ -9,6 +9,6 @@ services:
       - SYS_ADMIN
       - DAC_READ_SEARCH
 # Local storage volumes to mount for development on macOS
-    volumes:
-     - /Users/sloffler/Code/transcoder-test-folders:/mount
-     - .:/code
+    # volumes:
+    #  - /Users/sloffler/Code/transcoder-test-folders:/mount
+    #  - .:/code
