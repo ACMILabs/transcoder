@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 
 import settings
 from easyaccess import convert_and_get_metadata
-import lib.fixity as fixity
 from lib.ffmpeg import find_video_file, restricted_file
 from lib.formatting import seconds_to_hms
 

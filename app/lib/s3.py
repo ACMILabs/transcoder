@@ -1,4 +1,3 @@
-import logging
 import os
 
 import boto3
@@ -7,6 +6,7 @@ S3_BUCKET = os.environ['S3_BUCKET']
 S3_ACCESS_KEY = os.environ['S3_ACCESS_KEY']
 S3_SECRET_KEY = os.environ['S3_SECRET_KEY']
 S3_LOCATION = os.environ['S3_LOCATION']
+
 
 def upload_to_s3(path):
     """

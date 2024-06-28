@@ -11,3 +11,4 @@ services:
 # Local storage volumes to mount for development on macOS
     volumes:
      - /Users/sloffler/Code/transcoder-test-folders:/mount
+     - .:/code

@@ -1,21 +1,15 @@
+import csv
+import json
+import logging
+import os
+import subprocess
+from datetime import datetime
 from pathlib import Path
 
-from urllib.parse import urlparse
-
 import settings
-import tempfile
-import logging
-from lib.fixity import fixity_move
-import json
-import subprocess
-import os
-from datetime import datetime
-from pytz import timezone
-import requests
 from dateutil.parser import parse as parse_date
-from shutil import which
-import csv
 from lib.formatting import seconds_to_hms
+from pytz import timezone
 
 timezone = timezone(settings.TIMEZONE)
 
@@ -58,7 +52,8 @@ METADATA_CSV_HEADERS = [
 
 class FFMPEGError(subprocess.CalledProcessError):
     def __str__(self):
-        return "Command '%s' didn't complete successfully (exit status %d). Perhaps not a valid video file?" % (" ".join(self.cmd), self.returncode)
+        return f"Command '{' '.join(self.cmd)}' didn't complete successfully (exit status {self.returncode}). "\
+               "Perhaps not a valid video file?"
 
 
 def get_file_metadata(file_location):
@@ -69,7 +64,7 @@ def get_file_metadata(file_location):
     }
 
 
-def get_video_metadata(video_location):
+def get_video_metadata(video_location):  # pylint: disable=too-many-locals
     """
     Use ffprobe to discern information about the video.
 
@@ -77,18 +72,18 @@ def get_video_metadata(video_location):
     :return: Dictionary of attributes.
     """
 
-
     ffprobe_args = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", video_location]
     try:
         command = " ".join(ffprobe_args)
-        logging.info("Running %s" % command)
+        logging.info("Running %s", command)
         cmd = subprocess.run(ffprobe_args, stdout=subprocess.PIPE, check=True)
         out = cmd.stdout
         m = json.loads(out.decode('utf-8'))
     except subprocess.CalledProcessError as e:
         raise FFMPEGError(e.returncode, ffprobe_args) from e
 
-    # put the first stream of each type in the top-level, for straightforward property access via e.g. j['video']['width']
+    # Put the first stream of each type in the top-level, for straightforward property access
+    # e.g. j['video']['width']
     for stream in m['streams']:
         if stream['codec_type'] not in m:
             m[stream['codec_type']] = stream
@@ -99,9 +94,10 @@ def get_video_metadata(video_location):
     frame_rate = m_video.get('avg_frame_rate', "0/1").split("/")
     video_frame_rate = int(frame_rate[0]) * 1.0 / int(frame_rate[1])
 
+    # pylint: disable=fixme
     # TODO: these are naive datetimes at the moment. Need to make them aware.
-    # Use various techniques to get the creation date. If it's in the video metadata, use that, else use the
-    # file/header.
+    # Use various techniques to get the creation date. If it's in the video metadata, use that,
+    # else use the file/header.
 
     file_metadata = get_file_metadata(video_location)
     try:
@@ -111,7 +107,7 @@ def get_video_metadata(video_location):
 
     _, ext = os.path.splitext(video_location)
 
-    with open('%s.md5' % video_location) as checksum_file:
+    with open(f'{video_location}.md5', 'r', encoding='utf-8') as checksum_file:
         checksum = checksum_file.read()
 
     duration_hms = seconds_to_hms(
@@ -131,15 +127,15 @@ def get_video_metadata(video_location):
         'overall_bit_rate': int(m['format'].get('bit_rate', 0)) or None,
 
         'video_codec': f"{m_video.get('codec_long_name', None)} ({m_video.get('codec_tag_string', None)})",
-        'video_bit_rate':int(m_video.get('bit_rate', 0)) or None,
-        'video_max_bit_rate':int(m_video.get('max_bit_rate', 0)) or None,
+        'video_bit_rate': int(m_video.get('bit_rate', 0)) or None,
+        'video_max_bit_rate': int(m_video.get('max_bit_rate', 0)) or None,
         'video_frame_rate': video_frame_rate,
 
-        'width': m_video.get('width', None), # int already
-        'height': m_video.get('height', None), # int already
+        'width': m_video.get('width', None),  # int already
+        'height': m_video.get('height', None),  # int already
 
         'audio_codec': f"{m_audio.get('codec_long_name', None)} ({m_audio.get('codec_tag_string', None)})",
-        'audio_channels': m_audio.get('channels', None), # int
+        'audio_channels': m_audio.get('channels', None),  # int
         'audio_sample_rate': int(m_audio.get('sample_rate', 0)) or None,
         'audio_bit_rate': int(m_audio.get('bit_rate', 0)) or None,
         'audio_max_bit_rate': int(m_audio.get('max_bit_rate', 0)) or None,
@@ -148,18 +144,21 @@ def get_video_metadata(video_location):
 
 
 # Mini lib for network-concurrency-friendly locking/unlocking a file by writing adjacent '.lock' files.
-
 def _lockfile(filepath):
-    return "%s.lock" % filepath
+    return f"{filepath}.lock"
+
 
 def is_locked(filepath):
     return os.path.exists(_lockfile(filepath))
 
+
 def lock(filepath):
     Path(_lockfile(filepath)).touch()
 
+
 def unlock(filepath):
     os.remove(_lockfile(filepath))
+
 
 def restricted_file(filepath):
     """
@@ -169,15 +168,16 @@ def restricted_file(filepath):
     restricted = False
     if '_RESTRICTED_' in filepath:
         restricted = True
-        logging.info(f'Ignoring restricted file: {filepath}')
+        logging.info('Ignoring restricted file: %s', filepath)
     return restricted
 
 
-def find_video_file(source_folder, lock_files=True):
+def find_video_file(source_folder, lock_files=True):  # pylint: disable=inconsistent-return-statements
     # generate all the video paths in the source folder
     source_folder = os.path.abspath(os.path.expanduser(source_folder))
-    for dirpath, dirnames, filenames in os.walk(source_folder, followlinks=True):
+    for dirpath, _, filenames in os.walk(source_folder, followlinks=True):
         for file in filenames:
+            # pylint: disable=consider-iterating-dictionary
             if os.path.splitext(file)[-1] in list(VIDEO_MIME_TYPES.keys()):
                 filepath = os.path.join(dirpath, file)
                 # make sure the file still exists, in case another thread is running and deleted it
@@ -201,9 +201,9 @@ def write_metadata_summary_entry(file_metadata):
     :param folder: the folder where the csv file is/will be saved
     :return: None
     """
-    metadata_file_path = os.path.join(settings.OUTPUT_FOLDER, '%s_metadata.csv' % datetime.today().strftime("%Y%m%d"))
+    metadata_file_path = os.path.join(settings.OUTPUT_FOLDER, f'{datetime.today().strftime("%Y%m%d")}_metadata.csv')
     metadata_file_exists = os.path.isfile(metadata_file_path)
-    with open(metadata_file_path, 'a') as metadata_csv:
+    with open(metadata_file_path, 'a', encoding='utf-8') as metadata_csv:
         metadata_csv_writer = csv.DictWriter(metadata_csv, fieldnames=METADATA_CSV_HEADERS)
         if not metadata_file_exists:
             metadata_csv_writer.writeheader()
