@@ -75,8 +75,6 @@ EXHIBITIONS_WEB_FFMPEG_ARGS = [
     '-n',  # don't overwrite existing files
 ]
 
-
-
 TIMEZONE = 'Australia/Victoria'
 
 # for retries when copying files between volumes fail

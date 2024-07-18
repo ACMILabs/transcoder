@@ -1,0 +1,24 @@
+name: ACMI Transcoder CI
+
+on: [push]
+
+jobs:
+  build-and-test-transcoder:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@main
+      with:
+        fetch-depth: 1
+        ref: ${{ github.ref }}
+    - name: Build Python lint and test
+      run: |
+        cp dev.tmpl.env dev.env
+        docker-compose -f docker-compose-dev.yml up --build -d
+
+    - name: Run Python lint and test
+      run: docker exec transcoder make linttest
+
+    - name: cancel entire action if failed
+      if: failure()
+      uses: andymckay/cancel-action@master

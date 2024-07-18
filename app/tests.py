@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 
 import settings
 from easyaccess import convert_and_get_metadata
-import lib.fixity as fixity
 from lib.ffmpeg import find_video_file, restricted_file
 from lib.formatting import seconds_to_hms
 
@@ -75,11 +74,12 @@ class TestEncoding(unittest.TestCase):
         )
         self.assertEqual(metadata['mime_type'], 'video/mp4')
         self.assertEqual(metadata['video_frame_rate'], 25.0)
+        self.assertEqual(metadata['video_codec'], 'H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (avc1)')
         # Test video input bitrate isn't high enough to pass
         # self.assertTrue(metadata['video_bit_rate'] >= 20000000)
         self.assertEqual(metadata['width'], 1920)
         self.assertEqual(metadata['height'], 1080)
-        self.assertEqual(metadata['audio_codec'], 'aac')
+        self.assertEqual(metadata['audio_codec'], 'AAC (Advanced Audio Coding) (mp4a)')
         self.assertEqual(metadata['audio_channels'], 2)
         self.assertEqual(metadata['audio_sample_rate'], 48000)
         self.assertTrue(metadata['audio_bit_rate'] >= 320000)
