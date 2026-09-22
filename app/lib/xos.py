@@ -1,4 +1,6 @@
+import logging
 import os
+import time
 
 import requests
 
@@ -31,9 +33,27 @@ def get_or_create_xos_stub_video(video_data):
 
 def update_xos_with_final_video(asset_id, video_data):
     """
-    Update the specified asset with keys and values from video_data
+    Update the asset, retrying server and connection errors three times.
     """
     xos_video_endpoint = f'{XOS_API_ENDPOINT}assets/{asset_id}/'
     headers = {'Authorization': f'Token {XOS_AUTH_TOKEN}'}
-    response = requests.patch(xos_video_endpoint, json=video_data, headers=headers, timeout=120)
-    response.raise_for_status()
+    retry_delays = (5, 10, 20)
+    for attempt in range(len(retry_delays) + 1):
+        try:
+            response = requests.patch(xos_video_endpoint, json=video_data, headers=headers, timeout=120)
+            response.raise_for_status()
+            return
+        except requests.HTTPError as exception:
+            if exception.response is None or not 500 <= exception.response.status_code < 600:
+                raise
+            if attempt == len(retry_delays):
+                raise
+        except (requests.ConnectionError, requests.Timeout):
+            if attempt == len(retry_delays):
+                raise
+        delay = retry_delays[attempt]
+        logging.warning(
+            'Could not update XOS asset %s; retry %s/%s in %s seconds.',
+            asset_id, attempt + 1, len(retry_delays), delay,
+        )
+        time.sleep(delay)
