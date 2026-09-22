@@ -33,7 +33,7 @@ from lib.xos import get_or_create_xos_stub_video, update_xos_with_final_video
 logging.basicConfig(format='%(asctime)s: %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
 
-# pylint: disable=too-many-arguments,inconsistent-return-statements
+# pylint: disable=too-many-arguments,too-many-positional-arguments,inconsistent-return-statements
 def convert_and_get_metadata(
         source_file_path,
         dest_file_path,
@@ -75,7 +75,7 @@ def convert_to_exhibition_formats(
         web_file_type,
         vernon_id,
         title,
-):  # pylint: disable=too-many-arguments
+):  # pylint: disable=too-many-arguments,too-many-positional-arguments
     access_metadata = None
     web_metadata = None
     try:
@@ -115,7 +115,7 @@ def convert_to_collection_formats(
         web_file_type,
         vernon_id,
         title,
-):  # pylint: disable=too-many-arguments
+):  # pylint: disable=too-many-arguments,too-many-positional-arguments
     access_metadata = None
     web_metadata = None
     try:

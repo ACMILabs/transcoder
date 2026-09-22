@@ -13,6 +13,7 @@ ACCESS_FFMPEG_ARGS = [
     '-stats',
     '-hide_banner',
     '-pix_fmt', 'yuv420p',  # colour format compatible with quicktime
+    '-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2:0:0:exact=1',  # trim odd dimensions for H.264 4:2:0
     '-c:v', 'libx264',
     '-preset', 'veryslow',
     # quality of conversion. Try veryslow if lots of time, or ultrafast for testing. Default is 'medium'.
@@ -27,6 +28,7 @@ WEB_FFMPEG_ARGS = [
     '-stats',
     '-hide_banner',
     '-pix_fmt', 'yuv420p',  # colour format compatible with quicktime
+    '-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2:0:0:exact=1',  # trim odd dimensions for H.264 4:2:0
     '-c:v', 'libx264',
     '-preset', 'veryslow',
     # quality of conversion. Try veryslow if lots of time, or ultrafast for testing. Default is 'medium'.

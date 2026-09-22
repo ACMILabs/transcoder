@@ -10,16 +10,16 @@ help:
 	@echo 'Grouped commands:'
 	@echo ' linttest         - Run lint and test'
 build:
-	docker-compose -f docker-compose-dev.yml up --build
+	docker compose -f docker-compose-dev.yml up --build
 up:
-	docker-compose -f docker-compose-dev.yml up
+	docker compose -f docker-compose-dev.yml up
 down:
-	docker-compose down
+	docker compose down
 lint:
 	# Lint the code and check imports have been sorted correctly
 	pylint *
 	flake8
-	isort -rc --check-only .
+	isort --check-only .
 test:
 	# Run tests
 	pytest -v -s app/tests.py

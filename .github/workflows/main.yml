@@ -14,7 +14,7 @@ jobs:
     - name: Build Python lint and test
       run: |
         cp dev.tmpl.env dev.env
-        docker-compose -f docker-compose-dev.yml up --build -d
+        docker compose -f docker-compose-dev.yml up --build -d
 
     - name: Run Python lint and test
       run: docker exec transcoder make linttest

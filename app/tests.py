@@ -4,10 +4,12 @@ import unittest
 from unittest import mock
 from unittest.mock import MagicMock
 
+import requests
 import settings
 from easyaccess import convert_and_get_metadata
 from lib.ffmpeg import find_video_file, restricted_file
 from lib.formatting import seconds_to_hms
+from lib.xos import update_xos_with_final_video
 
 
 class TestFormatting(unittest.TestCase):
@@ -55,7 +57,10 @@ class TestFileHandling(unittest.TestCase):
         self.assertTrue(restricted_file('B2004203_mo01_RESTRICTED_CyberthonIV.mov'))
 
     def test_find_video_file(self):
-        self.assertTrue(find_video_file('/code/app/test_data/watch'))
+        with tempfile.TemporaryDirectory() as watch_folder:
+            video_path = shutil.copy('/code/app/test_data/watch/B2004203_mo01_AmazingVideo.mp4', watch_folder)
+            self.assertEqual(find_video_file(watch_folder), video_path)
+            self.assertIsNone(find_video_file(watch_folder))
         self.assertFalse(find_video_file('/code/app/test_data/restricted'))
 
 
@@ -86,6 +91,79 @@ class TestEncoding(unittest.TestCase):
         self.assertEqual(metadata['vernon_id'], '1')
         self.assertEqual(metadata['title'], 'Video title')
         shutil.rmtree(tmp_folder)
+
+
+class TestXosUpdates(unittest.TestCase):
+
+    def setUp(self):
+        self.patch_request = mock.patch('lib.xos.requests.patch').start()
+        self.addCleanup(mock.patch.stopall)
+        self.sleep = mock.patch('lib.xos.time.sleep').start()
+        self.video_data = {'title': 'Video', 'resource': 'video.mp4', 'access_metadata': '{}'}
+
+    @staticmethod
+    def response(status):
+        response = requests.Response()
+        response.status_code = status
+        response.url = 'https://example.com/api/assets/5833/'
+        return response
+
+    def test_success_without_retry(self):
+        self.patch_request.return_value = self.response(200)
+        update_xos_with_final_video(5833, self.video_data)
+        self.patch_request.assert_called_once()
+        self.sleep.assert_not_called()
+
+    def test_server_errors_retry_same_update_and_recover(self):
+        self.patch_request.side_effect = [self.response(status) for status in (500, 502, 503, 200)]
+        update_xos_with_final_video(5833, self.video_data)
+        self.assertEqual(self.patch_request.call_count, 4)
+        first_call = self.patch_request.call_args_list[0]
+        self.assertTrue(first_call.args[0].endswith('/assets/5833/'))
+        self.assertEqual(first_call.kwargs['json'], self.video_data)
+        self.assertEqual(self.patch_request.call_args_list, [first_call] * 4)
+        self.assertEqual(self.sleep.call_args_list, [mock.call(5), mock.call(10), mock.call(20)])
+
+    def test_server_errors_raise_after_three_retries(self):
+        self.patch_request.return_value = self.response(500)
+        with self.assertRaises(requests.HTTPError) as caught:
+            update_xos_with_final_video(5833, self.video_data)
+        self.assertIs(caught.exception.response, self.patch_request.return_value)
+        self.assertEqual(self.patch_request.call_count, 4)
+        self.assertEqual(self.sleep.call_count, 3)
+
+    def test_client_errors_do_not_retry(self):
+        for status in (400, 401, 403, 404, 422):
+            with self.subTest(status=status):
+                self.patch_request.reset_mock()
+                self.patch_request.return_value = self.response(status)
+                with self.assertRaises(requests.HTTPError):
+                    update_xos_with_final_video(5833, self.video_data)
+                self.patch_request.assert_called_once()
+                self.sleep.assert_not_called()
+
+    def test_connection_errors_and_timeouts_retry(self):
+        for error_type in (requests.ConnectionError, requests.Timeout):
+            with self.subTest(error_type=error_type):
+                self.patch_request.reset_mock()
+                self.sleep.reset_mock()
+                self.patch_request.side_effect = [error_type('Temporary failure'), self.response(200)]
+                update_xos_with_final_video(5833, self.video_data)
+                self.assertEqual(self.patch_request.call_count, 2)
+                self.sleep.assert_called_once_with(5)
+
+    def test_connection_errors_and_timeouts_stop_after_three_retries(self):
+        for error_type in (requests.ConnectionError, requests.Timeout):
+            with self.subTest(error_type=error_type):
+                self.patch_request.reset_mock()
+                self.sleep.reset_mock()
+                error = error_type('Persistent failure')
+                self.patch_request.side_effect = error
+                with self.assertRaises(error_type) as caught:
+                    update_xos_with_final_video(5833, self.video_data)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(self.patch_request.call_count, 4)
+                self.assertEqual(self.sleep.call_count, 3)
 
 
 if __name__ == '__main__':

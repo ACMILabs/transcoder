@@ -3,7 +3,7 @@ Transcoder
 
 The Collections transcoder mounts network folders and watches for "Master" files, then converts them to a specified "Access" format, then safely (using fixity checks) moves both files into final locations.
 
-The "Access" format is a simple ACMI specification that converts to h.264 and preserves resolution and framerate. This specification can be changed or overridden in ``settings.ACCESS_FFMPEG_ARGS``.
+The "Access" format is a simple ACMI specification that converts to h.264 and preserves framerate. Collections access and web copies crop odd widths and heights down to the nearest even number, removing at most one column from the right and one row from the bottom (for example, 740x435 becomes 740x434). Even dimensions are preserved. This specification can be changed or overridden in ``settings.ACCESS_FFMPEG_ARGS``.
 
 For Exhibitions videos
 ----------------------
